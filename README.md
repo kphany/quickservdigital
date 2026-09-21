@@ -1,2 +1,0 @@
-# quickservdigital
-QuickServ Digital website
