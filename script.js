@@ -1,3 +1,36 @@
+const qsTrackEvent = (eventName, metadata = {}) => {
+  const payload = {
+    event: eventName,
+    page: window.location.pathname,
+    timestamp: new Date().toISOString(),
+    ...metadata,
+  };
+
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push(payload);
+
+  if (window.gtag) {
+    window.gtag('event', eventName, payload);
+  }
+};
+
+const attachAnalyticsHooks = () => {
+  document.querySelectorAll('a[href^="https://t.me/"] , a[href^="mailto:"] , .button, .contact-link, .nav-cta').forEach((link) => {
+    link.addEventListener('click', () => {
+      const label = link.textContent ? link.textContent.trim() : link.getAttribute('href');
+      const href = link.getAttribute('href') || '';
+
+      if (href.startsWith('mailto:')) {
+        qsTrackEvent('email_click', { label, href });
+      } else if (href.startsWith('https://t.me/')) {
+        qsTrackEvent('telegram_click', { label, href });
+      } else if (link.classList.contains('nav-cta') || link.classList.contains('button') || link.classList.contains('contact-link')) {
+        qsTrackEvent('cta_click', { label, href });
+      }
+    }, { passive: true });
+  });
+};
+
 const year = document.getElementById('year');
 
 if (year) {
@@ -98,28 +131,51 @@ const inquiryForm = document.querySelector('[data-inquiry-form]');
 
 if (inquiryForm) {
   const feedback = inquiryForm.querySelector('[data-form-feedback]');
+  const directEmailLinks = document.querySelectorAll('[data-mailto-fallback]');
 
   inquiryForm.addEventListener('submit', (event) => {
     event.preventDefault();
 
     if (!inquiryForm.reportValidity()) {
+      if (feedback) {
+        feedback.textContent = 'Please complete all required fields before sending your inquiry.';
+      }
       return;
     }
 
     const data = new FormData(inquiryForm);
-    const name = data.get('name');
+    const name = String(data.get('name') || 'Anonymous');
+    const service = String(data.get('service') || 'Not provided');
     const subject = `QuickServ Digital inquiry from ${name}`;
     const body = [
       `Name: ${name}`,
       `Email: ${data.get('email')}`,
       `Business: ${data.get('business') || 'Not provided'}`,
-      `Interested in: ${data.get('service')}`,
+      `Interested in: ${service}`,
       '',
       'Message:',
       data.get('message'),
     ].join('\n');
 
-    feedback.textContent = 'Opening your email app with your inquiry details. If it does not open, use the email link below.';
-    window.location.href = `mailto:contact@quickservdigital.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const mailtoUrl = `mailto:contact@quickservdigital.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    directEmailLinks.forEach((link) => {
+      link.href = mailtoUrl;
+    });
+
+    qsTrackEvent('lead_form_submit', {
+      form_name: 'inquiry_form',
+      service,
+      name,
+      email: String(data.get('email') || ''),
+    });
+
+    if (feedback) {
+      feedback.textContent = 'Your message is ready to send. If your email app does not open, use the direct email option below.';
+    }
+
+    window.location.href = mailtoUrl;
   });
 }
+
+attachAnalyticsHooks();
