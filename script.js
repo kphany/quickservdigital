@@ -45,13 +45,73 @@ if (nav && navWrap) {
   document.body.classList.add('nav-ready');
   nav.id = 'site-nav';
 
-  const servicesMenu = nav.querySelector('.services-menu');
-  if (servicesMenu) {
+  let servicesDropdown = nav.querySelector('.services-dropdown');
+  if (!servicesDropdown) {
+    const createLink = (label, href) => {
+      const link = document.createElement('a');
+      link.href = `${sitePrefix}${href}`;
+      link.textContent = label;
+      return link;
+    };
+
+    servicesDropdown = document.createElement('div');
+    servicesDropdown.className = 'services-dropdown';
+
+    const servicesLink = createLink('Services', 'services.html');
+    servicesLink.className = 'services-toggle';
+    servicesLink.setAttribute('aria-haspopup', 'true');
+    servicesLink.setAttribute('aria-expanded', 'false');
+    const dropdownArrow = document.createElement('span');
+    dropdownArrow.className = 'dropdown-arrow';
+    dropdownArrow.setAttribute('aria-hidden', 'true');
+    dropdownArrow.textContent = '▾';
+    servicesLink.append(' ', dropdownArrow);
+
+    const servicesMenu = document.createElement('div');
+    servicesMenu.className = 'services-menu';
+    servicesMenu.setAttribute('role', 'menu');
+    [
+      ['Messenger Chatbot', 'services/messenger-chatbot.html'],
+      ['AI Automation', 'services/ai-automation.html'],
+      ['Social Media Marketing', 'services/digital-marketing.html'],
+      ['SEO', 'services/seo.html'],
+      ['Local SEO', 'services/local-seo.html'],
+      ['PPC Advertising', 'services/ppc.html'],
+      ['Content Marketing', 'services/content-marketing.html'],
+      ['Website Design & Development', 'services/website-design.html'],
+      ['Domain & Web Hosting', 'services/domain-hosting.html'],
+    ].forEach(([label, href]) => {
+      const link = createLink(label, href);
+      link.setAttribute('role', 'menuitem');
+      servicesMenu.appendChild(link);
+    });
+
+    const allServicesLink = createLink('View All Services →', 'services.html');
+    allServicesLink.className = 'services-menu-all';
+    allServicesLink.setAttribute('role', 'menuitem');
+    servicesMenu.appendChild(allServicesLink);
+    servicesDropdown.append(servicesLink, servicesMenu);
+
+    nav.replaceChildren(
+      createLink('Home', 'index.html'),
+      servicesDropdown,
+      createLink('Cambodia', 'cambodia.html'),
+      createLink('About', 'about.html'),
+      createLink('How It Works', 'index.html#how'),
+      createLink('Contact', 'contact.html'),
+    );
+  }
+
+  if (!nav.querySelector(':scope > a[href$="pricing.html"]')) {
     const pricingLink = document.createElement('a');
-    pricingLink.className = 'services-menu-pricing';
     pricingLink.href = `${sitePrefix}pricing.html`;
-    pricingLink.textContent = 'Products & Pricing';
-    servicesMenu.appendChild(pricingLink);
+    pricingLink.textContent = 'Pricing';
+    servicesDropdown.insertAdjacentElement('afterend', pricingLink);
+  }
+
+  const navCta = navWrap.querySelector('.nav-cta');
+  if (navCta) {
+    navCta.textContent = 'Get Started';
   }
 
   const navToggle = document.createElement('button');
@@ -63,7 +123,6 @@ if (nav && navWrap) {
   navToggle.innerHTML = '<span></span><span></span><span></span>';
   navWrap.insertBefore(navToggle, nav);
 
-  const servicesDropdown = nav.querySelector('.services-dropdown');
   let servicesToggle;
 
   if (servicesDropdown) {
@@ -72,6 +131,7 @@ if (nav && navWrap) {
 
     if (servicesLink && servicesMenu) {
       servicesLink.classList.replace('services-toggle', 'services-link');
+      servicesLink.textContent = 'View All Services';
       servicesLink.removeAttribute('aria-haspopup');
       servicesLink.removeAttribute('aria-expanded');
       servicesMenu.id = 'services-menu';
@@ -146,7 +206,7 @@ if (footer) {
   footerLinks.setAttribute('aria-label', 'Policies and pricing');
 
   [
-    ['Products & Pricing', 'pricing.html'],
+    ['Pricing', 'pricing.html'],
     ['Terms of Service', 'terms-of-service.html'],
     ['Privacy Policy', 'privacy-policy.html'],
     ['Refund / Cancellation', 'refund-cancellation.html'],
