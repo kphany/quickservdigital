@@ -2,6 +2,7 @@
 import os
 import re
 from pathlib import Path
+from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parent.parent
 REQUIRED_FILES = [
@@ -16,6 +17,10 @@ REQUIRED_FILES = [
     'robots.txt',
     'sitemap.xml',
     'wrangler.jsonc',
+    'pricing.html',
+    'terms-of-service.html',
+    'privacy-policy.html',
+    'refund-cancellation.html',
 ]
 
 HTML_FILES = [
@@ -28,14 +33,15 @@ if missing:
     raise SystemExit(f'Missing required files: {missing}')
 
 errors = []
-link_pattern = re.compile(r'href=["\']([^"\']+)["\']', re.IGNORECASE)
+link_pattern = re.compile(r'\b(?:href|src)=["\']([^"\']+)["\']', re.IGNORECASE)
 for html_file in HTML_FILES:
     text = html_file.read_text(encoding='utf-8', errors='ignore')
     for match in link_pattern.findall(text):
         ref = match.strip()
-        if ref.startswith(('http://', 'https://', 'mailto:', 'tel:', '#', 'javascript:')):
+        parsed_ref = urlsplit(ref)
+        if parsed_ref.scheme or ref.startswith('//') or not parsed_ref.path:
             continue
-        target = (html_file.parent / ref.split('#', 1)[0]).resolve()
+        target = (html_file.parent / parsed_ref.path).resolve()
         if not target.exists():
             errors.append(f'{html_file.relative_to(ROOT)} -> missing target: {ref}')
 

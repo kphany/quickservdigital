@@ -32,6 +32,7 @@ const attachAnalyticsHooks = () => {
 };
 
 const year = document.getElementById('year');
+const sitePrefix = window.location.pathname.includes('/services/') ? '../' : '';
 
 if (year) {
   year.textContent = new Date().getFullYear();
@@ -43,6 +44,15 @@ const navWrap = document.querySelector('.nav-wrap');
 if (nav && navWrap) {
   document.body.classList.add('nav-ready');
   nav.id = 'site-nav';
+
+  const servicesMenu = nav.querySelector('.services-menu');
+  if (servicesMenu) {
+    const pricingLink = document.createElement('a');
+    pricingLink.className = 'services-menu-pricing';
+    pricingLink.href = `${sitePrefix}pricing.html`;
+    pricingLink.textContent = 'Products & Pricing';
+    servicesMenu.appendChild(pricingLink);
+  }
 
   const navToggle = document.createElement('button');
   navToggle.className = 'nav-toggle';
@@ -129,6 +139,27 @@ if (nav && navWrap) {
 
 const inquiryForm = document.querySelector('[data-inquiry-form]');
 
+const footer = document.querySelector('footer');
+if (footer) {
+  const footerLinks = document.createElement('nav');
+  footerLinks.className = 'footer-links';
+  footerLinks.setAttribute('aria-label', 'Policies and pricing');
+
+  [
+    ['Products & Pricing', 'pricing.html'],
+    ['Terms of Service', 'terms-of-service.html'],
+    ['Privacy Policy', 'privacy-policy.html'],
+    ['Refund / Cancellation', 'refund-cancellation.html'],
+  ].forEach(([label, path]) => {
+    const link = document.createElement('a');
+    link.href = `${sitePrefix}${path}`;
+    link.textContent = label;
+    footerLinks.appendChild(link);
+  });
+
+  footer.appendChild(footerLinks);
+}
+
 if (inquiryForm) {
   const feedback = inquiryForm.querySelector('[data-form-feedback]');
   const directEmailLinks = document.querySelectorAll('[data-mailto-fallback]');
@@ -166,8 +197,6 @@ if (inquiryForm) {
     qsTrackEvent('lead_form_submit', {
       form_name: 'inquiry_form',
       service,
-      name,
-      email: String(data.get('email') || ''),
     });
 
     if (feedback) {
